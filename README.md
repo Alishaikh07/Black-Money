@@ -1,36 +1,50 @@
-# Transaction Analysis Dashboard
+# 🕵️‍♂️ Black Money Transactions Analysis
 
-This repository contains a Streamlit application designed for interactive analysis of transaction data. The dashboard provides key insights through statistical summaries and visualizations, making it easier to interpret large datasets and explore transaction trends across different countries.
+## 📜 Overview
+This project focuses on analyzing the **Global Black Money Transactions Dataset** to extract meaningful insights and provide actionable data for operations, sales, and marketing teams. An interactive **Streamlit dashboard** is built to display visualizations and facilitate dynamic exploration of the dataset.
 
-## Overview
+---
 
-The **Transaction Analysis Dashboard** is a powerful tool that offers:
-- A user-friendly interface to visualize and explore transaction data.
-- Detailed summary statistics for an immediate understanding of data characteristics.
-- Top contributors displayed by transaction amounts, helping to identify important regions.
+## 🎯 Objectives
+1. Perform **data cleaning** and **exploratory data analysis (EDA)** to identify patterns and insights.
+2. Create a **Streamlit application** for interactive visualization.
+3. Deploy the application on **Streamlit Cloud** for easy accessibility.
+4. Document the process in a well-structured GitHub repository.
 
-Built in Python, this application leverages:
-- **Streamlit** for creating a web-based interactive dashboard.
-- **Pandas** for data handling and manipulation.
-- **Seaborn** and **Matplotlib** for data visualization.
-- **Plotly** for creating interactive charts.
+---
 
-## Features
+## 📊 Key Features
+- **Interactive Dashboard:** Explore the dataset using filters, sliders, and dropdowns.
+- **Insightful Visualizations:** 
+  - Bar charts, line charts, pie charts, and scatter plots.
+  - KPIs for operations, sales, and marketing teams.
+- **Custom Analysis:**
+  - Supply chain insights for operations.
+  - Vendor performance for sales strategy.
+  - Trend analysis for marketing campaigns.
 
-- **Display Raw Data**: Provides a toggle in the sidebar to view the complete dataset, allowing users to verify and explore raw data entries.
-- **Summary Statistics**: Calculates and displays descriptive statistics like mean, median, standard deviation, etc., offering an immediate snapshot of the dataset’s structure.
-- **Top 5 Countries by Transaction Amount**: Visualizes the countries with the highest transaction amounts, displayed in an easy-to-read bar chart to highlight key contributors.
+---
 
-## Getting Started
+## 🛠️ Tools and Libraries
+- **Python Libraries:**
+  - `pandas`, `numpy`: Data manipulation and cleaning.
+  - `matplotlib`, `seaborn`, `plotly`: Data visualization.
+  - `streamlit`: Interactive dashboard.
+- **Deployment Platform:**
+  - **Streamlit Cloud**
 
-### Prerequisites
+---
 
-To run this application, you’ll need Python installed on your system, along with the following libraries:
-- `streamlit`: For building the interactive app interface.
-- `pandas`: For efficient data loading and manipulation.
-- `seaborn` and `matplotlib`: For creating static visualizations.
-- `plotly`: For adding interactive charting capabilities.
+## 🗂️ Dataset
+**Dataset Name:** Global Black Money Transactions Dataset  
+[Click here to view/download the dataset](https://www.kaggle.com/datasets/waqi786/global-black-money-transactions-dataset)
 
-You can install all required libraries with the following command:
+---
+
+## 🚀 How to Run Locally
+Follow these steps to run the application on your local machine:
+
+### 1. Clone the Repository
 ```bash
-pip install streamlit pandas seaborn matplotlib plotly
+git clone https://github.com/your-username/black-money-transactions-analysis.git
+cd black-money-transactions-analysis
