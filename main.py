@@ -2,9 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import matplotlib
-matplotlib.use("Agg")
-st.sidebar.image("C:/Users/user/live project of masai unit 2/Black Money.png",use_container_width=True)
+st.sidebar.image("/workspaces/Black-Money/Black Money.png",use_container_width=True)
 
 # Caching the data using st.cache_data
 @st.cache_data
@@ -13,7 +11,7 @@ def load_data(filepath):
     return pd.read_csv(filepath)
 
 # Load the dataset
-data = load_data(r"C:\Users\asus\OneDrive\Desktop\Masai School all Notes\Unit 2 PY\Unit2ProjectBlackmoney\Big_Black_Money_Dataset.csv"
+data = load_data(r"/workspaces/Black-Money/Big_Black_Money_Dataset.csv"
 )  # Replace with your dataset file path
 
 # Sidebar for Filters
