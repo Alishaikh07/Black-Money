@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib
+matplotlib.use("Agg")
 st.sidebar.image("C:/Users/user/live project of masai unit 2/Black Money.png",use_container_width=True)
 
 # Caching the data using st.cache_data
