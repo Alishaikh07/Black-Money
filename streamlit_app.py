@@ -10,8 +10,6 @@ df['Date of Transaction'] = pd.to_datetime(df['Date of Transaction'])
 # Sidebar options
 st.sidebar.header("Options")
 # Adding an image to the sidebar
-st.sidebar.image("assets/Black Money.png", use_container_width=True)
-
 # Add graph selection in the sidebar
 graph_option = st.sidebar.radio(
     "Select a Graph to Display:",
