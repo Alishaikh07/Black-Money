@@ -1,103 +1,146 @@
 import streamlit as st
 import pandas as pd
+import altair as alt
 import matplotlib.pyplot as plt
-import seaborn as sns
 st.sidebar.image("C:/Users/user/live project of masai unit 2/Black Money.png",use_container_width=True)
 
-# Caching the data using st.cache_data
-@st.cache_data
-def load_data(filepath):
-    """Load data from a CSV file."""
-    return pd.read_csv(filepath)
 
-# Load the dataset
-data = load_data("Big_Black_Money_Dataset.csv"
-)  # Replace with your dataset file path
+# Load dataset
+df = pd.read_csv('Big_Black_Money_Dataset.csv')
+
+# Convert 'Date of Transaction' to datetime
+df['Date of Transaction'] = pd.to_datetime(df['Date of Transaction'])
+
+# Title and Introduction
+st.title("Big Black Money Insights 💰")
+st.write("Explore transactions, risk scores, and uncover insights interactively.")
 
 # Sidebar for Filters
-st.sidebar.header("Dashboard Controls")
+st.sidebar.header("Filters")
 
-# User Input Options
-selected_column = st.sidebar.selectbox(
-    "Select Column for Analysis", data.columns
+# Country Filter
+selected_country = st.sidebar.multiselect(
+    "Select Originating Country",
+    options=df['Country'].unique(),
+    default=df['Country'].unique()
 )
 
-# Ensure the selected column is numeric for the slider
-if pd.api.types.is_numeric_dtype(data[selected_column]):
-    numeric_filter = st.sidebar.slider(
-        "Filter Numeric Range",
-        min_value=float(data[selected_column].min()),
-        max_value=float(data[selected_column].max()),
-        value=(float(data[selected_column].min()), float(data[selected_column].max())),
-    )
-else:
-    numeric_filter = None
-    st.sidebar.write("The selected column is not numeric. Numeric filters are disabled.")
+# Transaction Type Filter
+selected_transaction_type = st.sidebar.multiselect(
+    "Select Transaction Type",
+    options=df['Transaction Type'].unique(),
+    default=df['Transaction Type'].unique()
+)
 
-# Main Dashboard
-st.title("Interactive Black Money Transactions Dashboard")
+# Amount range slider
+amount_range = st.sidebar.slider(
+    "Select Transaction Amount Range (USD)",
+    int(df['Amount (USD)'].min()),
+    int(df['Amount (USD)'].max()),
+    (10000, 1000000)
+)
 
-# Display Filtered Data
-st.subheader("Filtered Dataset")
+# Date range filter
+min_date = df['Date of Transaction'].min()
+max_date = df['Date of Transaction'].max()
 
-if numeric_filter:
-    # Apply numeric filtering if the column is numeric
-    filtered_data = data[
-        (data[selected_column] >= numeric_filter[0]) & (data[selected_column] <= numeric_filter[1])
+start_date, end_date = st.sidebar.date_input(
+    "Select Date Range",
+    [min_date.date(), max_date.date()],
+    min_value=min_date.date(),
+    max_value=max_date.date()
+)
+
+# Risk Score slider
+risk_score_range = st.sidebar.slider(
+    "Select Risk Score Range",
+    int(df['Money Laundering Risk Score'].min()),
+    int(df['Money Laundering Risk Score'].max()),
+    (1, 10)
+)
+
+# Real-time filtered data
+filtered_df = df[
+    (df['Country'].isin(selected_country)) &
+    (df['Transaction Type'].isin(selected_transaction_type)) &
+    (df['Amount (USD)'].between(amount_range[0], amount_range[1])) &
+    (df['Date of Transaction'] >= pd.to_datetime(start_date)) &
+    (df['Date of Transaction'] <= pd.to_datetime(end_date)) &
+    (df['Money Laundering Risk Score'].between(risk_score_range[0], risk_score_range[1]))
+]
+
+# Sidebar for Graph Selection
+st.sidebar.header("Graph Options")
+graph_type = st.sidebar.selectbox(
+    "Select Graph Type",
+    options=[
+        "Pie Chart - Transaction Type Distribution",
+        "Line Chart - Risk Score Over Time",
+        "Scatter Plot - Amount vs. Risk Score",
+        "Area Chart - Cumulative Amount Over Time",
+        "Histogram - Transaction Amount Distribution"
     ]
-else:
-    # Display all data if no numeric filter is applicable
-    filtered_data = data
-
-st.write(filtered_data)
-
-# Generate Chart Based on User Input
-st.subheader("Dynamic Visualization")
-selected_chart = st.sidebar.radio(
-    "Select Chart Type",
-    ["Bar Chart", "Line Chart", "Scatter Plot", "Pie Chart"]
 )
 
-if selected_chart == "Bar Chart":
-    fig, ax = plt.subplots()
-    sns.countplot(data=filtered_data, x=selected_column, ax=ax)
-    st.pyplot(fig)
+# Display filtered data table interactively
+st.subheader("Filtered Data")
+st.dataframe(filtered_df, use_container_width=True)
 
-elif selected_chart == "Line Chart":
-    if pd.api.types.is_numeric_dtype(data[selected_column]):
-        fig, ax = plt.subplots()
-        filtered_data.groupby(selected_column).size().plot(kind='line', ax=ax)
-        st.pyplot(fig)
+# Display Graphs Dynamically
+st.subheader("Visualization")
+
+if graph_type == "Pie Chart - Transaction Type Distribution":
+    if not filtered_df.empty:
+        transaction_type_distribution = filtered_df['Transaction Type'].value_counts()
+        fig1, ax1 = plt.subplots()
+        ax1.pie(transaction_type_distribution, labels=transaction_type_distribution.index, autopct='%1.1f%%', startangle=90)
+        ax1.axis('equal')  # Equal aspect ratio ensures the pie chart is circular.
+        st.pyplot(fig1)
     else:
-        st.error("Line chart requires a numeric column.")
+        st.write("No data available for this filter.")
 
-elif selected_chart == "Scatter Plot":
-    st.sidebar.write("Scatter plots require two numeric columns.")
-    numeric_columns = data.select_dtypes(include='number').columns
-    col_x = st.sidebar.selectbox("Select X-Axis", numeric_columns)
-    col_y = st.sidebar.selectbox("Select Y-Axis", numeric_columns)
-    fig, ax = plt.subplots()
-    ax.scatter(filtered_data[col_x], filtered_data[col_y])
-    ax.set_xlabel(col_x)
-    ax.set_ylabel(col_y)
-    st.pyplot(fig)
+elif graph_type == "Line Chart - Risk Score Over Time":
+    if not filtered_df.empty:
+        risk_score_time = filtered_df.groupby(pd.Grouper(key='Date of Transaction', freq='M'))['Money Laundering Risk Score'].mean().reset_index()
+        st.line_chart(risk_score_time.set_index('Date of Transaction')['Money Laundering Risk Score'])
+    else:
+        st.write("No data available for this filter.")
 
-elif selected_chart == "Pie Chart":
-    fig, ax = plt.subplots()
-    filtered_data[selected_column].value_counts().plot(kind='pie', autopct='%1.1f%%', ax=ax)
-    ax.set_ylabel('')
-    st.pyplot(fig)
+elif graph_type == "Scatter Plot - Amount vs. Risk Score":
+    if not filtered_df.empty:
+        scatter_chart = alt.Chart(filtered_df).mark_circle(size=60).encode(
+            x='Amount (USD)',
+            y='Money Laundering Risk Score',
+            color='Country',
+            tooltip=['Transaction ID', 'Amount (USD)', 'Money Laundering Risk Score', 'Country']
+        ).interactive()
+        st.altair_chart(scatter_chart, use_container_width=True)
+    else:
+        st.write("No data available for this filter.")
 
-# Additional Sidebar Features
-st.sidebar.subheader("Additional Options")
-if st.sidebar.checkbox("Show Summary Statistics"):
-    st.subheader("Summary Statistics")
-    st.write(filtered_data.describe())
+elif graph_type == "Area Chart - Cumulative Amount Over Time":
+    if not filtered_df.empty:
+        filtered_df['Cumulative Amount'] = filtered_df['Amount (USD)'].cumsum()
+        area_chart = alt.Chart(filtered_df).mark_area(opacity=0.5).encode(
+            x='Date of Transaction:T',
+            y='Cumulative Amount:Q',
+            tooltip=['Date of Transaction', 'Cumulative Amount']
+        ).interactive()
+        st.altair_chart(area_chart, use_container_width=True)
+    else:
+        st.write("No data available for this filter.")
 
-if st.sidebar.checkbox("Show Original Dataset"):
-    st.subheader("Original Dataset")
-    st.write(data)
+elif graph_type == "Histogram - Transaction Amount Distribution":
+    if not filtered_df.empty:
+        hist_values = filtered_df['Amount (USD)']
+        st.bar_chart(hist_values.value_counts().sort_index())
+    else:
+        st.write("No data available for this filter.")
 
-# Footer Section
-st.sidebar.markdown("---")
-st.sidebar.write("Developed by Your Name")
+# Download filtered data
+st.sidebar.download_button(
+    label="Download Filtered Data as CSV",
+    data=filtered_df.to_csv(index=False),
+    file_name='filtered_data.csv',
+    mime='text/csv'
+)
