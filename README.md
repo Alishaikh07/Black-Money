@@ -48,3 +48,5 @@ Follow these steps to run the application on your local machine:
 ```bash
 git clone https://github.com/your-username/black-money-transactions-analysis.git
 cd black-money-transactions-analysis
+### online link in streamlit cloud:
+https://black-money-8piqwjeexwmsdujalzsaw8.streamlit.app/
