@@ -1,156 +1,101 @@
 import streamlit as st
 import pandas as pd
-import altair as alt
-st.sidebar.image("C:/Users/user/live project of masai unit 2/Black Money.png",use_container_width=True)
 
 # Load dataset
 df = pd.read_csv('Big_Black_Money_Dataset.csv')
 
-# Convert 'Date of Transaction' to datetime
+# Ensure the 'Date of Transaction' column is in datetime format
 df['Date of Transaction'] = pd.to_datetime(df['Date of Transaction'])
 
-# Title and Introduction
-st.title("Big Black Money Insights 💰")
-st.write("Explore transactions, risk scores, and uncover insights interactively.")
+# Sidebar options
+st.sidebar.header("Options")
+# Adding an image to the sidebar
+st.sidebar.image("assets/Black Money.png", use_container_width=True)
 
-# Sidebar for Filters
+# Add graph selection in the sidebar
+graph_option = st.sidebar.radio(
+    "Select a Graph to Display:",
+    (
+        "Transaction Volume by Country",
+        "Risk Score Distribution",
+        "Transaction Amount by Type",
+        "Shell Companies by Industry",
+        "Top Financial Institutions",
+        "Risk Score Over Time",
+        "High-Risk Transactions",
+        "Transactions by Tax Haven Countries",
+    )
+)
+
+# Sidebar filters
 st.sidebar.header("Filters")
-
-# Country Filter
-selected_country = st.sidebar.multiselect(
-    "Select Originating Country",
-    options=df['Country'].unique(),
-    default=df['Country'].unique()
-)
-
-# Transaction Type Filter
-selected_transaction_type = st.sidebar.multiselect(
-    "Select Transaction Type",
-    options=df['Transaction Type'].unique(),
-    default=df['Transaction Type'].unique()
-)
-
-# Amount range slider
+selected_country = st.sidebar.selectbox("Select Originating Country", df['Country'].unique())
+selected_transaction_type = st.sidebar.selectbox("Select Transaction Type", df['Transaction Type'].unique())
 amount_range = st.sidebar.slider(
     "Select Transaction Amount Range (USD)",
     int(df['Amount (USD)'].min()),
     int(df['Amount (USD)'].max()),
     (10000, 1000000)
 )
-
-# Date range filter
-min_date = df['Date of Transaction'].min()
-max_date = df['Date of Transaction'].max()
-
-start_date, end_date = st.sidebar.date_input(
+date_range = st.sidebar.date_input(
     "Select Date Range",
-    [min_date.date(), max_date.date()],
-    min_value=min_date.date(),
-    max_value=max_date.date()
+    value=(df['Date of Transaction'].min(), df['Date of Transaction'].max())
 )
 
-# Risk Score slider
-risk_score_range = st.sidebar.slider(
-    "Select Risk Score Range",
-    int(df['Money Laundering Risk Score'].min()),
-    int(df['Money Laundering Risk Score'].max()),
-    (1, 10)
-)
-
-# Real-time filtered data
+# Filter data based on selections
 filtered_df = df[
-    (df['Country'].isin(selected_country)) &
-    (df['Transaction Type'].isin(selected_transaction_type)) &
+    (df['Country'] == selected_country) &
+    (df['Transaction Type'] == selected_transaction_type) &
     (df['Amount (USD)'].between(amount_range[0], amount_range[1])) &
-    (df['Date of Transaction'] >= pd.to_datetime(start_date)) &
-    (df['Date of Transaction'] <= pd.to_datetime(end_date)) &
-    (df['Money Laundering Risk Score'].between(risk_score_range[0], risk_score_range[1]))
+    (df['Date of Transaction'].between(date_range[0], date_range[1]))
 ]
 
-# Sidebar for Graph Selection
-st.sidebar.header("Graph Options")
-graph_type = st.sidebar.selectbox(
-    "Select Graph Type",
-    options=[
-        "Bar Chart - Transaction Type Distribution",
-        "Line Chart - Risk Score Over Time",
-        "Scatter Plot - Amount vs. Risk Score",
-        "Area Chart - Cumulative Amount Over Time",
-        "Histogram - Transaction Amount Distribution"
-    ]
-)
+# Title and Introduction
+st.title("Big Black Money Insights")
+st.write("An interactive dashboard to explore transactions, risk scores, and key insights.")
 
-# Display filtered data table interactively
+# Display selected graph
+if graph_option == "Transaction Volume by Country":
+    st.subheader("Transaction Volume by Country")
+    transaction_volume = filtered_df.groupby('Country')['Amount (USD)'].sum().reset_index()
+    st.bar_chart(transaction_volume.set_index('Country')['Amount (USD)'])
+
+elif graph_option == "Risk Score Distribution":
+    st.subheader("Risk Score Distribution")
+    risk_score_counts = filtered_df['Money Laundering Risk Score'].value_counts().sort_index()
+    st.bar_chart(risk_score_counts)
+
+elif graph_option == "Transaction Amount by Type":
+    st.subheader("Transaction Amount by Type")
+    transaction_amount_type = filtered_df.groupby('Transaction Type')['Amount (USD)'].sum().reset_index()
+    st.bar_chart(transaction_amount_type.set_index('Transaction Type')['Amount (USD)'])
+
+elif graph_option == "Shell Companies by Industry":
+    st.subheader("Shell Companies Involved by Industry")
+    shell_companies = filtered_df.groupby('Industry')['Shell Companies Involved'].sum().reset_index()
+    st.bar_chart(shell_companies.set_index('Industry')['Shell Companies Involved'])
+
+elif graph_option == "Top Financial Institutions":
+    st.subheader("Top Financial Institutions by Transaction Volume")
+    top_institutions = filtered_df.groupby('Financial Institution')['Amount (USD)'].sum().reset_index()
+    top_institutions = top_institutions.sort_values(by='Amount (USD)', ascending=False).head(10)
+    st.bar_chart(top_institutions.set_index('Financial Institution')['Amount (USD)'])
+
+elif graph_option == "Risk Score Over Time":
+    st.subheader("Risk Score Over Time")
+    risk_score_time = filtered_df.groupby(pd.Grouper(key='Date of Transaction', freq='M'))['Money Laundering Risk Score'].mean().reset_index()
+    st.line_chart(risk_score_time.set_index('Date of Transaction')['Money Laundering Risk Score'])
+
+elif graph_option == "High-Risk Transactions":
+    st.subheader("High-Risk Transactions (Risk Score > 7)")
+    high_risk_transactions = filtered_df[filtered_df['Money Laundering Risk Score'] > 7]
+    st.write(high_risk_transactions[['Transaction ID', 'Country', 'Amount (USD)', 'Money Laundering Risk Score']])
+
+elif graph_option == "Transactions by Tax Haven Countries":
+    st.subheader("Transactions by Tax Haven Countries")
+    tax_haven_transactions = filtered_df.groupby('Tax Haven Country')['Amount (USD)'].sum().reset_index()
+    st.bar_chart(tax_haven_transactions.set_index('Tax Haven Country')['Amount (USD)'])
+
+# Display filtered data
 st.subheader("Filtered Data")
-st.dataframe(filtered_df, use_container_width=True)
-
-# Display Graphs Dynamically
-st.subheader("Visualization")
-
-if graph_type == "Bar Chart - Transaction Type Distribution":
-    if not filtered_df.empty:
-        bar_chart = alt.Chart(filtered_df).mark_bar().encode(
-            x='Transaction Type:N',
-            y='count():Q',
-            color='Transaction Type:N',
-            tooltip=['Transaction Type', 'count()']
-        )
-        st.altair_chart(bar_chart, use_container_width=True)
-    else:
-        st.write("No data available for this filter.")
-
-elif graph_type == "Line Chart - Risk Score Over Time":
-    if not filtered_df.empty:
-        risk_score_time = filtered_df.groupby(pd.Grouper(key='Date of Transaction', freq='M'))['Money Laundering Risk Score'].mean().reset_index()
-        line_chart = alt.Chart(risk_score_time).mark_line().encode(
-            x='Date of Transaction:T',
-            y='Money Laundering Risk Score:Q',
-            tooltip=['Date of Transaction', 'Money Laundering Risk Score']
-        )
-        st.altair_chart(line_chart, use_container_width=True)
-    else:
-        st.write("No data available for this filter.")
-
-elif graph_type == "Scatter Plot - Amount vs. Risk Score":
-    if not filtered_df.empty:
-        scatter_chart = alt.Chart(filtered_df).mark_circle(size=60).encode(
-            x='Amount (USD)',
-            y='Money Laundering Risk Score',
-            color='Country',
-            tooltip=['Transaction ID', 'Amount (USD)', 'Money Laundering Risk Score', 'Country']
-        ).interactive()
-        st.altair_chart(scatter_chart, use_container_width=True)
-    else:
-        st.write("No data available for this filter.")
-
-elif graph_type == "Area Chart - Cumulative Amount Over Time":
-    if not filtered_df.empty:
-        filtered_df['Cumulative Amount'] = filtered_df['Amount (USD)'].cumsum()
-        area_chart = alt.Chart(filtered_df).mark_area(opacity=0.5).encode(
-            x='Date of Transaction:T',
-            y='Cumulative Amount:Q',
-            tooltip=['Date of Transaction', 'Cumulative Amount']
-        ).interactive()
-        st.altair_chart(area_chart, use_container_width=True)
-    else:
-        st.write("No data available for this filter.")
-
-elif graph_type == "Histogram - Transaction Amount Distribution":
-    if not filtered_df.empty:
-        hist_values = filtered_df['Amount (USD)']
-        histogram = alt.Chart(filtered_df).mark_bar().encode(
-            x=alt.X('Amount (USD):Q', bin=alt.Bin(maxbins=30)),
-            y='count():Q',
-            tooltip=['Amount (USD)', 'count()']
-        )
-        st.altair_chart(histogram, use_container_width=True)
-    else:
-        st.write("No data available for this filter.")
-
-# Download filtered data
-st.sidebar.download_button(
-    label="Download Filtered Data as CSV",
-    data=filtered_df.to_csv(index=False),
-    file_name='filtered_data.csv',
-    mime='text/csv'
-)
+st.write(filtered_df)
