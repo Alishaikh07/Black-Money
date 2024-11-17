@@ -1,9 +1,7 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
-import matplotlib.pyplot as plt
 st.sidebar.image("C:/Users/user/live project of masai unit 2/Black Money.png",use_container_width=True)
-
 
 # Load dataset
 df = pd.read_csv('Big_Black_Money_Dataset.csv')
@@ -74,7 +72,7 @@ st.sidebar.header("Graph Options")
 graph_type = st.sidebar.selectbox(
     "Select Graph Type",
     options=[
-        "Pie Chart - Transaction Type Distribution",
+        "Bar Chart - Transaction Type Distribution",
         "Line Chart - Risk Score Over Time",
         "Scatter Plot - Amount vs. Risk Score",
         "Area Chart - Cumulative Amount Over Time",
@@ -89,20 +87,27 @@ st.dataframe(filtered_df, use_container_width=True)
 # Display Graphs Dynamically
 st.subheader("Visualization")
 
-if graph_type == "Pie Chart - Transaction Type Distribution":
+if graph_type == "Bar Chart - Transaction Type Distribution":
     if not filtered_df.empty:
-        transaction_type_distribution = filtered_df['Transaction Type'].value_counts()
-        fig1, ax1 = plt.subplots()
-        ax1.pie(transaction_type_distribution, labels=transaction_type_distribution.index, autopct='%1.1f%%', startangle=90)
-        ax1.axis('equal')  # Equal aspect ratio ensures the pie chart is circular.
-        st.pyplot(fig1)
+        bar_chart = alt.Chart(filtered_df).mark_bar().encode(
+            x='Transaction Type:N',
+            y='count():Q',
+            color='Transaction Type:N',
+            tooltip=['Transaction Type', 'count()']
+        )
+        st.altair_chart(bar_chart, use_container_width=True)
     else:
         st.write("No data available for this filter.")
 
 elif graph_type == "Line Chart - Risk Score Over Time":
     if not filtered_df.empty:
         risk_score_time = filtered_df.groupby(pd.Grouper(key='Date of Transaction', freq='M'))['Money Laundering Risk Score'].mean().reset_index()
-        st.line_chart(risk_score_time.set_index('Date of Transaction')['Money Laundering Risk Score'])
+        line_chart = alt.Chart(risk_score_time).mark_line().encode(
+            x='Date of Transaction:T',
+            y='Money Laundering Risk Score:Q',
+            tooltip=['Date of Transaction', 'Money Laundering Risk Score']
+        )
+        st.altair_chart(line_chart, use_container_width=True)
     else:
         st.write("No data available for this filter.")
 
@@ -133,7 +138,12 @@ elif graph_type == "Area Chart - Cumulative Amount Over Time":
 elif graph_type == "Histogram - Transaction Amount Distribution":
     if not filtered_df.empty:
         hist_values = filtered_df['Amount (USD)']
-        st.bar_chart(hist_values.value_counts().sort_index())
+        histogram = alt.Chart(filtered_df).mark_bar().encode(
+            x=alt.X('Amount (USD):Q', bin=alt.Bin(maxbins=30)),
+            y='count():Q',
+            tooltip=['Amount (USD)', 'count()']
+        )
+        st.altair_chart(histogram, use_container_width=True)
     else:
         st.write("No data available for this filter.")
 
