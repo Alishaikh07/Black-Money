@@ -5,11 +5,13 @@ import pandas as pd
 df = pd.read_csv('Big_Black_Money_Dataset.csv')
 
 # Ensure the 'Date of Transaction' column is in datetime format
-df['Date of Transaction'] = pd.to_datetime(df['Date of Transaction'])
+df['Date of Transaction'] = pd.to_datetime(df['Date of Transaction'], errors='coerce')  # Convert to datetime
 
 # Sidebar options
 st.sidebar.header("Options")
 # Adding an image to the sidebar
+st.sidebar.image("assets/Black Money.png", use_container_width=True)
+
 # Add graph selection in the sidebar
 graph_option = st.sidebar.radio(
     "Select a Graph to Display:",
@@ -40,12 +42,15 @@ date_range = st.sidebar.date_input(
     value=(df['Date of Transaction'].min(), df['Date of Transaction'].max())
 )
 
+# Ensure the date_range is in datetime format
+date_range = [pd.to_datetime(date) for date in date_range]
+
 # Filter data based on selections
 filtered_df = df[
     (df['Country'] == selected_country) &
     (df['Transaction Type'] == selected_transaction_type) &
     (df['Amount (USD)'].between(amount_range[0], amount_range[1])) &
-    (df['Date of Transaction'].between(date_range[0], date_range[1]))
+    (df['Date of Transaction'].between(date_range[0], date_range[1]))  # Corrected this part
 ]
 
 # Title and Introduction
